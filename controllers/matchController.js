@@ -95,15 +95,15 @@ exports.getMatches = async (req, res) => {
 
         // 🔥 FINAL FIX (userid ✅)
        const myAnswers = answers.filter(
-  a => a.userid && a.userid.equals
-    ? a.userid.equals(userId)
-    : String(a.userid) === String(userId)
+  a => a.userId && a.userId.equals
+    ? a.userId.equals(userId)
+    : String(a.userId) === String(userId)
 );
 
 const theirAnswers = answers.filter(
-  a => a.userid && a.userid.equals
-    ? !a.userid.equals(userId)
-    : String(a.userid) !== String(userId)
+  a => a.userId && a.userId.equals
+    ? !a.userId.equals(userId)
+    : String(a.userId) !== String(userId)
 );
 
         console.log("MY:", myAnswers.length);
