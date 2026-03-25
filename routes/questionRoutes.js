@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Question = require("../models/Question");
+const { getRandomQuestions } = require("../controllers/questionController");
 
 /* 🔥 GET ALL QUESTIONS */
 router.get("/", async (req, res) => {
@@ -11,5 +12,8 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+/* 🔥 RANDOM QUESTIONS (FIXED) */
+router.get("/random", getRandomQuestions);
 
 module.exports = router;
