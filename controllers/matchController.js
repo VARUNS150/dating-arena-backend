@@ -64,17 +64,17 @@ exports.getMatches = async (req, res) => {
   try {
 
     // 🔥 KEEP STRING (VERY IMPORTANT)
-    const userId = req.user.id;
+    const userId = new mongoose.Types.ObjectId(req.user.id);
 
-    const matches = await Match.find({
-      $or: [
-        { user1: userId },
-        { user2: userId }
-      ]
-    })
-      .populate("user1", "name email bio profilePic interests")
-      .populate("user2", "name email bio profilePic interests")
-      .sort({ createdAt: -1 });
+const matches = await Match.find({
+  $or: [
+    { user1: userId },
+    { user2: userId }
+  ]
+})
+.populate("user1", "name email bio profilePic interests")
+.populate("user2", "name email bio profilePic interests")
+.sort({ createdAt: -1 });
 
     const enrichedMatches = await Promise.all(
       matches.map(async (match) => {
