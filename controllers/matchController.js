@@ -64,36 +64,44 @@ exports.getMatches = async (req, res) => {
     .populate("user2", "name email bio profilePic interests")
     .sort({ createdAt: -1 });
 
-    const enrichedMatches = await Promise.all(
-      matches.map(async (match) => {
+    const enrichedMatches = [];
 
-        // 🔥 FIX: define otherUser properly
-        const isUser1 = String(match.user1._id) === String(userId);
+    for (let match of matches) {
 
-        const otherUser = isUser1 ? match.user2 : match.user1;
+      const isUser1 = String(match.user1._id) === String(userId);
 
-        // 🔥 ANSWERS
-        const answers = await Answer.find({
-          roomId: String(match.roomId)
-        }).populate("questionId", "text");
+      // ✅ ALWAYS DEFINE
+      let otherUser = null;
 
-        const myAnswers = answers.filter(a =>
-          String(a.userId) === String(userId)
-        );
+      if (isUser1) {
+        otherUser = match.user2;
+      } else {
+        otherUser = match.user1;
+      }
 
-        const theirAnswers = answers.filter(a =>
-          String(a.userId) !== String(userId)
-        );
+      // safety check
+      if (!otherUser) continue;
 
-        return {
-          ...match.toObject(),
-          otherUser,        // ✅ FIXED
-          myAnswers,
-          theirAnswers,
-          isMatched: true
-        };
-      })
-    );
+      const answers = await Answer.find({
+        roomId: String(match.roomId)
+      }).populate("questionId", "text");
+
+      const myAnswers = answers.filter(a =>
+        String(a.userId) === String(userId)
+      );
+
+      const theirAnswers = answers.filter(a =>
+        String(a.userId) !== String(userId)
+      );
+
+      enrichedMatches.push({
+        ...match.toObject(),
+        otherUser,   // ✅ ALWAYS DEFINED
+        myAnswers,
+        theirAnswers,
+        isMatched: true
+      });
+    }
 
     res.json(enrichedMatches);
 
