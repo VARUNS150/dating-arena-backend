@@ -15,7 +15,6 @@ exports.createMatch = async (req, res) => {
     const user1Id = new mongoose.Types.ObjectId(user1);
     const user2Id = new mongoose.Types.ObjectId(user2);
 
-    // 🔥 FIX: NO ObjectId for roomId
     const existingMatch = await Match.findOne({
       $or: [
         { user1: user1Id, user2: user2Id, roomId },
@@ -34,7 +33,7 @@ exports.createMatch = async (req, res) => {
       user1: user1Id,
       user2: user2Id,
       compatibility,
-      roomId   // 🔥 FIX
+      roomId
     });
 
     res.json({
@@ -68,12 +67,15 @@ exports.getMatches = async (req, res) => {
     const enrichedMatches = await Promise.all(
       matches.map(async (match) => {
 
-        // 🔥 FIX: ensure string match
+        // 🔥 FIX: define otherUser properly
+        const isUser1 = String(match.user1._id) === String(userId);
+
+        const otherUser = isUser1 ? match.user2 : match.user1;
+
+        // 🔥 ANSWERS
         const answers = await Answer.find({
           roomId: String(match.roomId)
-        });
-
-        const isUser1 = String(match.user1._id) === String(userId);
+        }).populate("questionId", "text");
 
         const myAnswers = answers.filter(a =>
           String(a.userId) === String(userId)
@@ -84,12 +86,12 @@ exports.getMatches = async (req, res) => {
         );
 
         return {
-  ...match.toObject(),
-  otherUser,
-  myAnswers,
-  theirAnswers,
-  isMatched: true   // 🔥 ADD THIS
-};
+          ...match.toObject(),
+          otherUser,        // ✅ FIXED
+          myAnswers,
+          theirAnswers,
+          isMatched: true
+        };
       })
     );
 
