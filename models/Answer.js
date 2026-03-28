@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const AnswerSchema = new mongoose.Schema({
-  userId: {   // ✅ FIXED (userid → userId)
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true
@@ -15,11 +15,13 @@ const AnswerSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+
+  // 🔥 FIX: ObjectId → String
   roomId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Room",
+    type: String,
     required: true
   }
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("Answer", AnswerSchema);

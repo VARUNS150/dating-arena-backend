@@ -15,11 +15,13 @@ const MatchSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+
+  // 🔥 FIX: ObjectId → String
   roomId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Room",
+    type: String,
     required: true
   }
+
 }, { timestamps: true });
 
 // 🔥 Prevent duplicate matches

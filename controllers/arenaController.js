@@ -6,8 +6,8 @@ exports.joinArena = async (req, res) => {
 
     const userId = req.user.id;
 
-    // find waiting room
-    let room = await ArenaRoom.findOne({ status: "waiting" });
+    // find waiting room (oldest one)
+    let room = await ArenaRoom.findOne({ status: "waiting" }).sort({ createdAt: 1 });
 
     // create new room if none exists
     if (!room) {
@@ -21,7 +21,7 @@ exports.joinArena = async (req, res) => {
 
       return res.json({
         message: "New room created",
-        roomId: room._id,
+        roomId: room._id.toString(),   // 🔥 FIX
         room
       });
 
@@ -32,16 +32,18 @@ exports.joinArena = async (req, res) => {
       room.players.push(userId);
     }
 
-    // if room full start game
-    if (room.players.length >= 4) {
+    // 🔥 IMPORTANT: testing ke liye 2 users pe hi room lock
+    if (room.players.length >= 2) {
       room.status = "active";
     }
 
     await room.save();
 
+    console.log("ROOM ASSIGNED:", room._id.toString());
+
     res.json({
       message: "Joined room",
-      roomId: room._id,
+      roomId: room._id.toString(),   // 🔥 FIX (MOST IMPORTANT)
       room
     });
 
@@ -63,7 +65,7 @@ exports.submitAnswer = async (req, res) => {
     const { roomId, questionId, answer } = req.body;
 
     const newAnswer = new Answer({
-      roomId,
+      roomId: String(roomId),   // 🔥 FIX (MOST IMPORTANT)
       userId,
       questionId,
       answer

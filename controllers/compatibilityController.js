@@ -8,16 +8,15 @@ exports.calculateCompatibility = async (req, res) => {
 
     const { roomId } = req.params;
 
-    const roomObjId = new mongoose.Types.ObjectId(roomId);
+    console.log("ROOM ID:", roomId, typeof roomId);
 
-    // 🔥 GET ALL ANSWERS OF ROOM
-    const answers = await Answer.find({ roomId: roomObjId });
+    // 🔥 FIX: NO ObjectId conversion
+    const answers = await Answer.find({ roomId });
 
     if (!answers.length) {
       return res.json([]);
     }
 
-    // 🔥 GROUP ANSWERS BY USER
     const userAnswers = {};
 
     answers.forEach(ans => {
@@ -34,9 +33,10 @@ exports.calculateCompatibility = async (req, res) => {
 
     const users = Object.keys(userAnswers);
 
+    console.log("USERS:", users);
+
     const matches = [];
 
-    // 🔥 COMPARE EVERY USER WITH EVERY USER
     for (let i = 0; i < users.length; i++) {
 
       for (let j = i + 1; j < users.length; j++) {
@@ -48,7 +48,7 @@ exports.calculateCompatibility = async (req, res) => {
 
         const total = Math.min(answers1.length, answers2.length);
 
-        if (total === 0) continue; // ⚠️ prevent divide by zero
+        if (total === 0) continue;
 
         for (let k = 0; k < total; k++) {
 
@@ -60,20 +60,20 @@ exports.calculateCompatibility = async (req, res) => {
 
         const percentage = (score / total) * 100;
 
-        console.log("⚖️ COMPARE:", users[i], users[j], "=>", percentage);
+        console.log("⚖️ COMPARE:", users[i], users[j], percentage);
 
-        // 🔥 MATCH CONDITION
         if (percentage >= 70) {
 
-          const user1 = new mongoose.Types.ObjectId(users[i]);
-          const user2 = new mongoose.Types.ObjectId(users[j]);
+          // 🔥 sort users (duplicate fix)
+          const sorted = [users[i], users[j]].sort();
 
-          // 🔥 CHECK EXISTING MATCH
+          const user1 = new mongoose.Types.ObjectId(sorted[0]);
+          const user2 = new mongoose.Types.ObjectId(sorted[1]);
+
           const existing = await Match.findOne({
-            $or: [
-              { user1, user2, roomId: roomObjId },
-              { user1: user2, user2: user1, roomId: roomObjId }
-            ]
+            user1,
+            user2,
+            roomId
           });
 
           if (!existing) {
@@ -82,17 +82,17 @@ exports.calculateCompatibility = async (req, res) => {
               user1,
               user2,
               compatibility: percentage,
-              roomId: roomObjId
+              roomId   // 🔥 string
             });
 
             await newMatch.save();
 
-            console.log("🔥 MATCH SAVED:", user1.toString(), user2.toString());
+            console.log("🔥 MATCH SAVED:", newMatch._id);
 
             matches.push(newMatch);
 
           } else {
-            console.log("⚠️ MATCH ALREADY EXISTS");
+            console.log("⚠️ MATCH EXISTS");
           }
 
         }
@@ -101,13 +101,13 @@ exports.calculateCompatibility = async (req, res) => {
 
     }
 
-    console.log("💖 TOTAL MATCHES CREATED:", matches.length);
+    console.log("💖 TOTAL MATCHES:", matches.length);
 
     res.json(matches);
 
   } catch (error) {
 
-    console.log("❌ COMPATIBILITY ERROR:", error.message);
+    console.log("❌ ERROR:", error.message);
 
     res.status(500).json({ error: error.message });
 
